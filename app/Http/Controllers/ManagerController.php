@@ -87,6 +87,77 @@ class ManagerController extends Controller
             return response()->json(["error"=>DB::table('sessions')->get()[0]]);
         }
     }
+    public function projectSearch(Request $request){
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                if (!$user || $user->roles->name !== 'ProjectManager') {
+                    return Redirect::route('unauthorized');
+                }
+                $query = $request->get('q');
+                $projects = Project::where('manager_id', $user->id)
+                ->where('name', 'like', '%' . $request->query('q') . '%')
+                ->pluck('name')
+                ->take(5);
+
+                if ($projects->isEmpty()) {
+                    return Inertia::render('Manager/MyProjects', [
+                        'projects' => [],
+                        'user' => $user,
+                    ]);
+                }
+                $actualProjects = [];
+                for($i = 0; $i < $projects->count(); $i++) {
+                    $projectModel = Project::find($projects[$i]->id);
+                    $projectModel->task_count = $projectModel->tasks->count();
+                    $projectModel->completed_tasks = $projectModel->tasks->where('status', 'completed')->count();
+                    $projectModel->pending_tasks = $projectModel->tasks->where('status', 'pending')->count();
+                    $projectModel['all_employees'] = $projectModel->crewMembers()->with('submittedReportsofEmployee')->get();
+                    $projectModel->in_progress_tasks = $projectModel->tasks->where('status', 'in_progress')->count();
+                    $projectModel->overdue_tasks = $projectModel->tasks->where('deadline', '<', now())->count();
+                    $tasks = $projectModel->tasks;
+                    $count = 0;
+                    for($j = 0; $j < $tasks->count(); $j++){
+                        if($tasks[$j]->task_no !== null){
+                            $count++;
+                        }
+                    }
+                    $projectModel->crew = $count;
+                    $actualProjects[] = $projectModel;
+                }
+                foreach ($actualProjects as $project) {
+                    $project->high_priority_tasks = $project->tasks->where('priority', 'high')->count();
+                    $project->incomplete_tasks = $project->tasks->whereNotIn('status', ['completed'])->count();
+                }
+
+                // Sort the projects
+                usort($actualProjects, function($a, $b) {
+                    // First by high priority tasks (descending)
+                    if ($a->high_priority_tasks != $b->high_priority_tasks) {
+                        return $b->high_priority_tasks - $a->high_priority_tasks;
+                    }
+
+                    // Then by incomplete tasks (descending)
+                    return $b->incomplete_tasks - $a->incomplete_tasks;
+                });
+
+                return response()->json($actualProjects);
+            }
+            return response()->json(["error"=>"error occured"]);
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e);
+            return response()->json(["error"=>DB::table('sessions')->get()[0]]);
+        }
+    }
+
     public function show($id){
         try {
             $temp = DB::table('sessions')->get();

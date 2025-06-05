@@ -1,8 +1,9 @@
 import { Head, router } from "@inertiajs/react";
 import axios from "axios";
+import { useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 import ManagerLayout from "../../Layouts/ManagerLayout.jsx";
-const MyProjects = ({ projects, user }) => {
+const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
     const data = [
         { name: "Group A", value: 400 },
         { name: "Group B", value: 300 },
@@ -10,7 +11,7 @@ const MyProjects = ({ projects, user }) => {
         { name: "Group D", value: 200 },
     ];
     const COLORS = ["#63d4a3", "#61aced", "#FFBB28", "#fa64a0"];
-    const temparr = projects;
+    const [temparr, setTemparr] = useState(projects);
     const token = localStorage.getItem("token");
     const session = localStorage.getItem("session");
     if (!session) {
@@ -30,6 +31,64 @@ const MyProjects = ({ projects, user }) => {
     if (!checkAuth()) {
         router.visit("/unauthorized");
     }
+    const [selectedCategory, setSelectedCategory] = useState(
+        category ? category : "All"
+    );
+    const settingText = (e) => {
+        setSearch(e.target.value);
+    };
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        router.get(
+            `/projects`,
+            { search: search, category: selectedCategory },
+            {
+                preserveState: true,
+            }
+        );
+    };
+
+    const handleCategoryChange = (e, projects) => {
+        setSelectedCategory(e.target.value);
+        console.log(e.target.value);
+    };
+    const [query, setQuery] = useState("");
+    const [suggestions, setSuggestions] = useState([]);
+    const [search, setSearch] = useState(searchPast ? searchPast : "");
+    const [isFocused, setIsFocused] = useState(false);
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+    }
+    const handleInputChange = async (e) => {
+        const value = e.target.value;
+        setQuery(value);
+
+        // fetch suggestions
+        try {
+            await axios.get("http://127.0.0.1:8000/sanctum/csrf-cookie", {
+                withCredentials: true,
+            });
+            const res = await axios.get(
+                `http://127.0.0.1:8000/api/project/suggestions?q=${value}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json",
+                        "X-XSRF-TOKEN": getCookie("XSRF-TOKEN"),
+                    },
+                    withCredentials: true,
+                }
+            );
+            const data = res.data;
+            setSuggestions(data);
+            console.log("data here", res);
+        } catch (error) {
+            console.error("Error fetching suggestions:", error);
+            setSuggestions([]);
+        }
+    };
     console.log("Projects:", projects);
     const handlleClick = async (projectId) => {
         const response = await axios.get(
@@ -54,7 +113,155 @@ const MyProjects = ({ projects, user }) => {
                 <div className="heading text-2xl flex flex-col justify-center items-center md:flex-row lg:flex-row xl:flex-row flex-wrap">
                     <div className="card flex justify-center items-center">
                         <span>
-                            <button className="btn btn-accent">Hey</button>
+                            <div className="flex justify-between items-center mb-4 w-full">
+                                <form
+                                    onSubmit={handleSubmit}
+                                    className="flex justify-center items-center w-full"
+                                >
+                                    <span className="flex justify-center items-center w-full">
+                                        <span className="flex justify-items-end w-full max-w-2xl">
+                                            <span className="relative w-full">
+                                                <label className="input w-full">
+                                                    <svg
+                                                        className="h-[1em] opacity-50"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <g
+                                                            strokeLinejoin="round"
+                                                            strokeLinecap="round"
+                                                            strokeWidth="2.5"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                        >
+                                                            <circle
+                                                                cx="11"
+                                                                cy="11"
+                                                                r="8"
+                                                            ></circle>
+                                                            <path d="m21 21-4.3-4.3"></path>
+                                                        </g>
+                                                    </svg>
+                                                    <span className="flex flex-col w-full">
+                                                        <span>
+                                                            <input
+                                                                type="search"
+                                                                placeholder="Search"
+                                                                value={search}
+                                                                name="search"
+                                                                onChange={(
+                                                                    e
+                                                                ) => {
+                                                                    settingText(
+                                                                        e
+                                                                    );
+                                                                    handleInputChange(
+                                                                        e
+                                                                    );
+                                                                }}
+                                                                onFocus={() =>
+                                                                    setIsFocused(
+                                                                        true
+                                                                    )
+                                                                }
+                                                                onBlur={() =>
+                                                                    setTimeout(
+                                                                        () =>
+                                                                            setIsFocused(
+                                                                                false
+                                                                            ),
+                                                                        200
+                                                                    )
+                                                                } // Delay for click
+                                                                className="relative z-10 p-2 w-full"
+                                                            />
+                                                        </span>
+
+                                                        {isFocused &&
+                                                            suggestions.length >
+                                                                0 && (
+                                                                <ul className="absolute top-full left-0 w-full bg-white shadow-md z-20 max-h-60 overflow-auto">
+                                                                    {suggestions.map(
+                                                                        (
+                                                                            item,
+                                                                            index
+                                                                        ) => (
+                                                                            <li
+                                                                                key={
+                                                                                    index
+                                                                                }
+                                                                                className="p-2 cursor-pointer hover:bg-gray-200"
+                                                                                onClick={() => {
+                                                                                    setSearch(
+                                                                                        item
+                                                                                    ); // optional: update field
+                                                                                    setIsFocused(
+                                                                                        false
+                                                                                    );
+                                                                                    // router.get(
+                                                                                    //     `/projects`,
+                                                                                    //     {
+                                                                                    //         search: item,
+                                                                                    //         category:
+                                                                                    //             selectedCategory,
+                                                                                    //     },
+                                                                                    //     {
+                                                                                    //         preserveState: true,
+                                                                                    //     }
+                                                                                    // );
+                                                                                }}
+                                                                            >
+                                                                                {
+                                                                                    item
+                                                                                }
+                                                                            </li>
+                                                                        )
+                                                                    )}
+                                                                </ul>
+                                                            )}
+                                                    </span>
+                                                </label>
+                                            </span>
+
+                                            <span>
+                                                <button
+                                                    className="btn btn-neutral text-white ml-2 mr-3"
+                                                    type="submit"
+                                                >
+                                                    Search
+                                                </button>
+                                            </span>
+                                        </span>
+
+                                        <span className="flex justify-center items-center">
+                                            <select
+                                                className="select w-full"
+                                                value={selectedCategory}
+                                                onChange={(e) =>
+                                                    handleCategoryChange(
+                                                        e,
+                                                        projects
+                                                    )
+                                                }
+                                                name="category"
+                                            >
+                                                <option value={"All"}>
+                                                    All
+                                                </option>
+                                                <option value={"completed"}>
+                                                    Completed
+                                                </option>
+                                                <option value={"on_hold"}>
+                                                    On Hold
+                                                </option>
+                                                <option value={"cancelled"}>
+                                                    Cancelled
+                                                </option>
+                                            </select>
+                                        </span>
+                                    </span>
+                                </form>
+                            </div>
                         </span>
                     </div>
 
