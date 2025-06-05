@@ -1,8 +1,7 @@
-import { router } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
 import axios from "axios";
 import { Cell, Pie, PieChart } from "recharts";
 import ManagerLayout from "../../Layouts/ManagerLayout.jsx";
-
 const MyProjects = ({ projects, user }) => {
     const data = [
         { name: "Group A", value: 400 },
@@ -46,6 +45,10 @@ const MyProjects = ({ projects, user }) => {
     };
     return (
         <>
+            <Head>
+                <title>My Projects</title>
+                <meta name="description" content="Page description" />
+            </Head>
             <ManagerLayout></ManagerLayout>
             <div className="heading text-2xl ml-7 lg:ml-90 mr-7 mt-25 flex items-center p-7 mb-20">
                 <div className="heading text-2xl flex flex-col justify-center items-center md:flex-row lg:flex-row xl:flex-row flex-wrap">

@@ -1,4 +1,4 @@
-import { router } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
 import axios from "axios";
 import { useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
@@ -469,6 +469,10 @@ const ProjectView = ({ project, category = null }) => {
     };
     return (
         <>
+            <Head>
+                <title>{project.name}</title>
+                <meta name="description" content="Page description" />
+            </Head>
             <ManagerLayout></ManagerLayout>
             <div className="heading text-2xl ml-7 lg:ml-90 mr-7 mt-25 flex items-center p-5 mb-20">
                 <div className="heading text-sm md:text-xl lg:text-2xl flex flex-col space-y-4 text-wrap w-screen">
