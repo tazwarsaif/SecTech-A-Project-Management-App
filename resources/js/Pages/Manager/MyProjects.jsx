@@ -56,29 +56,20 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
     const [suggestions, setSuggestions] = useState([]);
     const [search, setSearch] = useState(searchPast ? searchPast : "");
     const [isFocused, setIsFocused] = useState(false);
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(";").shift();
-    }
+
     const handleInputChange = async (e) => {
         const value = e.target.value;
         setQuery(value);
 
         // fetch suggestions
         try {
-            await axios.get("http://127.0.0.1:8000/sanctum/csrf-cookie", {
-                withCredentials: true,
-            });
             const res = await axios.get(
                 `http://127.0.0.1:8000/api/project/suggestions?q=${value}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         Accept: "application/json",
-                        "X-XSRF-TOKEN": getCookie("XSRF-TOKEN"),
                     },
-                    withCredentials: true,
                 }
             );
             const data = res.data;
