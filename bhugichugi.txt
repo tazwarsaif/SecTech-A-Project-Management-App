@@ -1,0 +1,85 @@
+// Project Management System ERD - dbdiagram.io format
+
+Table users {
+  id int [pk, increment]
+  name varchar
+  email varchar
+  password varchar
+  role_id int [ref: > roles.id]
+}
+
+Table roles {
+  id int [pk, increment]
+  name varchar
+}
+
+Table projects {
+  id int [pk, increment]
+  name varchar
+  description text
+  client_id int [ref: > users.id]
+  manager_id int [ref: > users.id]
+  start_date date
+  end_date date
+  status varchar
+}
+
+Table project_user {
+  project_id int [ref: > projects.id]
+  user_id int [ref: > users.id]
+  Note: "Pivot table to assign employees to projects"
+}
+
+Table tasks {
+  id int [pk, increment]
+  project_id int [ref: > projects.id]
+  title varchar
+  description text
+  status varchar
+  deadline date
+  created_by int [ref: > users.id]
+}
+
+Table task_user {
+  task_id int [ref: > tasks.id]
+  user_id int [ref: > users.id]
+  Note: "Pivot table to assign employees to tasks"
+}
+
+Table clients {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  company_name varchar
+  phone varchar
+  address text
+}
+
+Table commit_notifications {
+  id int [pk, increment]
+  project_id int [ref: > projects.id]
+  committed_by int [ref: > users.id]
+  message text
+  committed_at datetime
+  created_at datetime
+}
+
+Table user_notifications {
+  id int [pk, increment]
+  user_id int [ref: > users.id]
+  notification_id int [ref: > commit_notifications.id]
+  is_read boolean
+}
+
+
+$manager = App\Models\User::create(['name' => 'Alice Manager', 'email' => 'alice@example.com', 'password' => bcrypt('password'),'role_id' => 2]);
+
+$clientUser = App\Models\User::create(['name' => 'Client User', 'email' => 'client@example.com', 'password' => bcrypt('password'), 'role_id' => 3]);
+
+$client = App\Models\Client::create(['user_id' => 2, 'name' => 'Client User' ,'company_name' => 'Tech Innovations Ltd.', 'phone' => '123456789', 'address' => 'Dhaka, Bangladesh']);
+
+App\Models\Project::create(['name' => 'AI Integration Platform', 'description' => 'A system that integrates various AI services into internal tools.', 'start_date' => '2025-06-01', 'end_date' => '2025-08-30', 'status' => 'active', 'manager_id' => 2, 'client_id' => 1, ]);
+
+App\Models\Task::create(['title' => 'Authentication', 'description' => 'Auth the user login session persistence issue.', 'status' => 'in_progress', 'deadline' => '2025-06-15', 'project_id' => 1, 'created_by' => 1]);
+
+
+$employee = User::create(['name' => 'Epm', 'email' => 'alice02@example.com', 'password' => bcrypt('password'),'role_id' => 4]);
