@@ -101,7 +101,7 @@ const AllProjects = ({
             setSuggestions([]);
         }
     };
-    console.log("Projects:", projects);
+    console.log("Projects:", projects, user);
     const handleClick = async (event, projectId) => {
         event.preventDefault();
         console.log("Requesting takeover for project ID:", projectId);
@@ -408,19 +408,60 @@ const AllProjects = ({
                                                         )}
                                                     </h3>
                                                     <div className="modal-action">
+                                                        {!project.takeover_requested &&
+                                                            project.manager_id ===
+                                                                user.id && (
+                                                                <div>
+                                                                    <p className="text-success font-bold">
+                                                                        The
+                                                                        project
+                                                                        has been
+                                                                        assigned
+                                                                        to you.
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                         {project.takeover_requested && (
                                                             <div>
-                                                                <p className="text-warning font-bold">
-                                                                    You have
-                                                                    Already
-                                                                    requested
-                                                                    for the
-                                                                    takeover of
-                                                                    this
-                                                                    project.
-                                                                </p>
+                                                                {(project.takeover_accepted ||
+                                                                    project.manager_id ===
+                                                                        user.id) && (
+                                                                    <p className="text-success font-bold">
+                                                                        The
+                                                                        project
+                                                                        has been
+                                                                        assigned
+                                                                        to you.
+                                                                    </p>
+                                                                )}
+                                                                {!project.takeover_accepted &&
+                                                                    project.takeover_rejected && (
+                                                                        <p className="text-warning font-bold">
+                                                                            You
+                                                                            have
+                                                                            already
+                                                                            requested
+                                                                            for
+                                                                            the
+                                                                            takeover
+                                                                            of
+                                                                            this
+                                                                            project.
+                                                                        </p>
+                                                                    )}
+                                                                {!project.takeover_accepted &&
+                                                                    !project.takeover_rejected && (
+                                                                        <p className="text-warning font-bold">
+                                                                            Your
+                                                                            request
+                                                                            has
+                                                                            been
+                                                                            submitted.
+                                                                        </p>
+                                                                    )}
                                                             </div>
                                                         )}
+
                                                         <form method="dialog">
                                                             {/* if there is a button in form, it will close the modal */}
                                                             <button className="btn">

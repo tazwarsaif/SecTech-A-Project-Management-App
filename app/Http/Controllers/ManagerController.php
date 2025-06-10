@@ -193,7 +193,7 @@ class ManagerController extends Controller
                     $projectModel->pending_tasks = $projectModel->tasks->where('status', 'pending')->count();
                     $projectModel['all_employees'] = $projectModel->crewMembers()->with('submittedReportsofEmployee')->get();
                     $projectModel->in_progress_tasks = $projectModel->tasks->where('status', 'in_progress')->count();
-                    $projectModel->is_manager_unassigned = ($projectModel->manager_id == 0);
+                    $projectModel->is_manager_unassigned = is_null($projectModel->manager_id);
                     $projectModel->manager_name = $projectModel->manager ? $projectModel->manager->name : 'Unassigned';
                     $projectModel->takeover_requested = false;
                     $projectModel->takeover_accepted = false;
@@ -206,7 +206,7 @@ class ManagerController extends Controller
 
                     if ($assignment) {
                         $projectModel->takeover_requested = true;
-                        if ($assignment->status === 'accepted') {
+                        if ($assignment->status === 'approved') {
                             $projectModel->takeover_accepted = true;
                         } elseif ($assignment->status === 'rejected') {
                             $projectModel->takeover_rejected = true;

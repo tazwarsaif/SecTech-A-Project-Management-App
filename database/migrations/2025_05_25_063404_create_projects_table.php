@@ -15,8 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('manager_id')->constrained('users')->onDelete('set null')->nullable();
-            $table->foreignId('client_id')->constrained('clients')->nullable();
+            $table->foreignId('manager_id')
+                ->nullable()
+                ->constrained('users')
+                ->onDelete('set null');
+            $table->foreignId('client_id')
+                ->nullable()
+                ->constrained('clients')
+                ->nullOnDelete();
             $table->enum('status', ['active', 'completed', 'on_hold', 'cancelled'])->default('active');
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
