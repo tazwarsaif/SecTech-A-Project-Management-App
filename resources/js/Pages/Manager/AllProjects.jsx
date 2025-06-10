@@ -3,7 +3,12 @@ import axios from "axios";
 import { useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 import ManagerLayout from "../../Layouts/ManagerLayout.jsx";
-const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
+const AllProjects = ({
+    projects,
+    user,
+    searchPast = null,
+    category = "All",
+}) => {
     const data = [
         { name: "Group A", value: 400 },
         { name: "Group B", value: 300 },
@@ -12,6 +17,8 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
     ];
     const COLORS = ["#63d4a3", "#61aced", "#FFBB28", "#fa64a0"];
     const [temparr, setTemparr] = useState(projects);
+    const [message, setMessage] = useState("");
+    const [reportSubject, setReportSubject] = useState("");
     const token = localStorage.getItem("token");
     const session = localStorage.getItem("session");
     if (!session) {
@@ -51,6 +58,11 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
     const handleCategoryChange = (e, projects) => {
         if (e.target.value === "All") {
             setTemparr(projects);
+        } else if (e.target.value === "Unassigned") {
+            const filteredProjects = projects.filter(
+                (project) => project.manager_name === "Unassigned"
+            );
+            setTemparr(filteredProjects);
         } else {
             const filteredProjects = projects.filter(
                 (project) =>
@@ -90,22 +102,42 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
         }
     };
     console.log("Projects:", projects);
-    const handlleClick = async (projectId) => {
-        const response = await axios.get(
-            `http://127.0.0.1:8000/api/projects/${projectId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-        console.log("Project Details:", response.data);
-        router.visit(`/manager/myprojects/${projectId}`);
+    const handleClick = async (event, projectId) => {
+        event.preventDefault();
+        console.log("Requesting takeover for project ID:", projectId);
+
+        try {
+            const formData = {
+                project_id: projectId,
+                user_id: user.id,
+                requested_by: user.id,
+                status: "pending",
+                message: message,
+            };
+            console.log("Form Data:", formData);
+            const response = await axios.post(
+                `http://127.0.0.1:8000/api/assignment`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            console.log("Response:", response);
+        } catch (error) {
+            console.error("Error requesting project takeover:", error);
+        }
+    };
+    const closeView = (projectId) => {
+        setMessage("");
+        setReportSubject("");
+        document.getElementById(`request-takeover-${projectId}`).close();
     };
     return (
         <>
             <Head>
-                <title>My Projects</title>
+                <title>All Projects</title>
                 <meta name="description" content="Page description" />
             </Head>
             <ManagerLayout></ManagerLayout>
@@ -119,7 +151,7 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
                                     className="flex justify-center items-center w-full"
                                 >
                                     <span className="flex justify-center items-center w-full">
-                                        <span className="flex justify-items-end w-full max-w-2xl">
+                                        {/* <span className="flex justify-items-end w-full max-w-2xl">
                                             <span className="relative w-full">
                                                 <label className="input w-full">
                                                     <svg
@@ -232,7 +264,7 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
                                                     Search
                                                 </button>
                                             </span>
-                                        </span>
+                                        </span> */}
 
                                         <span className="flex justify-center items-center">
                                             <select
@@ -258,6 +290,9 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
                                                 <option value={"cancelled"}>
                                                     Cancelled
                                                 </option>
+                                                <option value={"Unassigned"}>
+                                                    Unassigned
+                                                </option>
                                             </select>
                                         </span>
                                     </span>
@@ -273,10 +308,11 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
                         } else if (project.status.toLowerCase() === "active") {
                             statusColor = "text-sky-500";
                         } else if (
-                            project.status.toLowerCase() === "on_hold" ||
                             project.status.toLowerCase() === "cancelled"
                         ) {
                             statusColor = "text-red-500";
+                        } else if (project.status.toLowerCase() === "on_hold") {
+                            statusColor = "text-yellow-500";
                         } else {
                             statusColor = "";
                         }
@@ -292,18 +328,188 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
                                                 {project.name}{" "}
                                                 <span className={statusColor}>
                                                     (Status: {project.status})
-                                                </span>
+                                                </span>{" "}
+                                                {project.manager_name ===
+                                                    "Unassigned" && (
+                                                    <span className="text-red-500">
+                                                        - Unassigned Manager
+                                                    </span>
+                                                )}
                                             </h2>
                                         </div>
                                         <div className="card-actions justify-end">
                                             <button
                                                 className="btn btn-primary my-5 md:my-0"
-                                                onClick={() =>
-                                                    handlleClick(project.id)
-                                                }
+                                                onClick={() => {
+                                                    document
+                                                        .getElementById(
+                                                            `project-details-${project.id}`
+                                                        )
+                                                        .showModal();
+                                                }}
                                             >
                                                 View Details
                                             </button>
+                                            <dialog
+                                                id={`project-details-${project.id}`}
+                                                className="modal modal-bottom sm:modal-middle"
+                                            >
+                                                <div className="modal-box">
+                                                    <h3 className="font-bold text-lg mb-3">
+                                                        Project Title:{" "}
+                                                        <p className="font-light text-lg">
+                                                            {project.name}
+                                                        </p>
+                                                    </h3>
+                                                    <h3 className="font-bold text-lg mb-3">
+                                                        Project description:{" "}
+                                                        <p className="font-light text-lg">
+                                                            {
+                                                                project.description
+                                                            }
+                                                        </p>
+                                                    </h3>
+                                                    <h3 className="font-bold text-lg mb-3 flex flex-col">
+                                                        Project status:{" "}
+                                                        {project.status ===
+                                                        "completed" ? (
+                                                            <div className="badge badge-success">
+                                                                Completed
+                                                            </div>
+                                                        ) : project.status ===
+                                                          "in_progress" ? (
+                                                            <div className="badge badge-info">
+                                                                In Progress
+                                                            </div>
+                                                        ) : project.status ===
+                                                          "cancelled" ? (
+                                                            <div className="badge badge-error">
+                                                                Cancelled
+                                                            </div>
+                                                        ) : (
+                                                            <div className="badge badge-warning">
+                                                                On Hold
+                                                            </div>
+                                                        )}
+                                                    </h3>
+                                                    <h3 className="font-bold text-lg mb-3">
+                                                        Assigned To:{" "}
+                                                        {project.manager_name ===
+                                                        "Unassigned" ? (
+                                                            <div className="badge badge-error font-bold">
+                                                                Unassigned
+                                                            </div>
+                                                        ) : (
+                                                            <div className="badge badge-info font-bold">
+                                                                {
+                                                                    project.manager_name
+                                                                }
+                                                            </div>
+                                                        )}
+                                                    </h3>
+                                                    <div className="modal-action">
+                                                        {project.takeover_requested && (
+                                                            <div>
+                                                                <p className="text-warning font-bold">
+                                                                    You have
+                                                                    Already
+                                                                    requested
+                                                                    for the
+                                                                    takeover of
+                                                                    this
+                                                                    project.
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        <form method="dialog">
+                                                            {/* if there is a button in form, it will close the modal */}
+                                                            <button className="btn">
+                                                                Close
+                                                            </button>
+                                                        </form>
+
+                                                        {project.is_manager_unassigned &&
+                                                            !project.takeover_requested && (
+                                                                <div>
+                                                                    <button
+                                                                        className="btn btn-primary"
+                                                                        onClick={() =>
+                                                                            document
+                                                                                .getElementById(
+                                                                                    `request-takeover-${project.id}`
+                                                                                )
+                                                                                .showModal()
+                                                                        }
+                                                                    >
+                                                                        Request
+                                                                        Takeover
+                                                                    </button>
+                                                                    <dialog
+                                                                        id={`request-takeover-${project.id}`}
+                                                                        className="modal modal-bottom sm:modal-middle"
+                                                                    >
+                                                                        <div className="modal-box">
+                                                                            <h3 className="font-bold text-lg">
+                                                                                {
+                                                                                    project.name
+                                                                                }
+                                                                            </h3>
+
+                                                                            <textarea
+                                                                                className="textarea w-full mt-4"
+                                                                                placeholder="Write your message"
+                                                                                value={
+                                                                                    message
+                                                                                }
+                                                                                onChange={(
+                                                                                    e
+                                                                                ) =>
+                                                                                    setMessage(
+                                                                                        e
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
+                                                                                }
+                                                                            ></textarea>
+                                                                            <div className="modal-action">
+                                                                                <form method="dialog">
+                                                                                    {/* if there is a button in form, it will close the modal */}
+                                                                                    <button
+                                                                                        className="btn"
+                                                                                        onClick={() =>
+                                                                                            closeView(
+                                                                                                project.id
+                                                                                            )
+                                                                                        }
+                                                                                    >
+                                                                                        Close
+                                                                                    </button>
+                                                                                    <button
+                                                                                        className="btn btn-primary"
+                                                                                        onClick={(
+                                                                                            e
+                                                                                        ) => {
+                                                                                            handleClick(
+                                                                                                e,
+                                                                                                project.id
+                                                                                            );
+                                                                                            closeView(
+                                                                                                project.id
+                                                                                            );
+                                                                                            project.takeover_requested = true;
+                                                                                        }}
+                                                                                    >
+                                                                                        Submit
+                                                                                    </button>
+                                                                                </form>
+                                                                            </div>
+                                                                        </div>
+                                                                    </dialog>
+                                                                </div>
+                                                            )}
+                                                    </div>
+                                                </div>
+                                            </dialog>
                                         </div>
                                     </div>
 
@@ -428,4 +634,4 @@ const MyProjects = ({ projects, searchPast = null, category = "All" }) => {
     );
 };
 
-export default MyProjects;
+export default AllProjects;

@@ -80,7 +80,7 @@ function ManagerLayout() {
                             <ul className="menu bg-stone-100 text-base-content min-h-full w-80 p-4">
                                 {/* Sidebar content here */}
                                 <li className="text-l font mb-4 mt-10">
-                                    <a>My Dashboard</a>
+                                    <a href="/manager">My Dashboard</a>
                                 </li>
                                 <li className="text-l font mb-4">
                                     <a href="/manager/myprojects">
@@ -93,7 +93,9 @@ function ManagerLayout() {
                                     </a>
                                 </li>
                                 <li className="text-l font mb-4">
-                                    <a>All Projects</a>
+                                    <a href="/manager/allprojects">
+                                        All Projects
+                                    </a>
                                 </li>
 
                                 <li className="text-l font p-0">

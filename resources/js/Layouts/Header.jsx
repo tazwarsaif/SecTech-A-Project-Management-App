@@ -85,16 +85,16 @@ const Header = () => {
                     <ul className="menu bg-stone-100 min-h-full w-80 p-4">
                         {/* Sidebar content here */}
                         <li className="text-l font mb-4 mt-4">
-                            <a>My Dashboard</a>
+                            <a href="/manager">My Dashboard</a>
                         </li>
                         <li className="text-l font mb-4">
-                            <a>My Projects</a>
+                            <a href="/manager/myprojects">My Projects</a>
                         </li>
                         <li className="text-l font mb-4">
                             <a>Project Creation</a>
                         </li>
                         <li className="text-l font mb-4">
-                            <a>All Projects</a>
+                            <a href="/manager/allprojects">All Projects</a>
                         </li>
                         <li className="text-l font mb-4">
                             <a>My Account</a>

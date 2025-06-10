@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Arr;
+use \Illuminate\Support\Facades\Auth;
 
 class ManagerController extends Controller
 {
@@ -29,7 +30,10 @@ class ManagerController extends Controller
                     }
                 }
                 $user = User::find($user_id);
-                $projects = DB::table('projects')->where('manager_id', $user->id)->get();
+                $projects = \App\Models\ProjectUser::where('user_id', $user->id)
+                    ->with('project')
+                    ->get()
+                    ->pluck('project');
                 if (!$user || $user->roles->name !== 'ProjectManager') {
                     return Redirect::route('unauthorized');
                 }
@@ -87,7 +91,7 @@ class ManagerController extends Controller
             return response()->json(["error"=>DB::table('sessions')->get()[0]]);
         }
     }
-    public function projectSearch(Request $request){
+    public function myProjects2(Request $request){
         try {
             $temp = DB::table('sessions')->get();
             if ($temp->count() > 1) {
@@ -99,15 +103,14 @@ class ManagerController extends Controller
                     }
                 }
                 $user = User::find($user_id);
+
                 if (!$user || $user->roles->name !== 'ProjectManager') {
                     return Redirect::route('unauthorized');
                 }
-                $query = $request->get('q');
-                $projects = Project::where('manager_id', $user->id)
-                ->where('name', 'like', '%' . $request->query('q') . '%')
-                ->pluck('name')
-                ->take(5);
-
+                $projects = \App\Models\ProjectUser::where('user_id', $user->id)
+                    ->with('project')
+                    ->get()
+                    ->pluck('project');
                 if ($projects->isEmpty()) {
                     return Inertia::render('Manager/MyProjects', [
                         'projects' => [],
@@ -149,7 +152,134 @@ class ManagerController extends Controller
                     return $b->incomplete_tasks - $a->incomplete_tasks;
                 });
 
-                return response()->json($actualProjects);
+                return response()->json([
+                    'projects' => $actualProjects,
+                    'user' => $user,
+                ]);
+            }
+            return Redirect::route('unauthorized');
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e);
+            return response()->json(["error"=>DB::table('sessions')->get()[0]]);
+        }
+    }
+    public function allProjects(Request $request){
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                $projects = DB::table('projects')->get();
+                if (!$user || $user->roles->name !== 'ProjectManager') {
+                    return Redirect::route('unauthorized');
+                }
+                if ($projects->isEmpty()) {
+                    return Inertia::render('Manager/MyProjects', [
+                        'projects' => [],
+                        'user' => $user,
+                    ]);
+                }
+                $actualProjects = [];
+                for($i = 0; $i < $projects->count(); $i++) {
+                    $projectModel = Project::find($projects[$i]->id);
+                    $projectModel->task_count = $projectModel->tasks->count();
+                    $projectModel->completed_tasks = $projectModel->tasks->where('status', 'completed')->count();
+                    $projectModel->pending_tasks = $projectModel->tasks->where('status', 'pending')->count();
+                    $projectModel['all_employees'] = $projectModel->crewMembers()->with('submittedReportsofEmployee')->get();
+                    $projectModel->in_progress_tasks = $projectModel->tasks->where('status', 'in_progress')->count();
+                    $projectModel->is_manager_unassigned = ($projectModel->manager_id == 0);
+                    $projectModel->manager_name = $projectModel->manager ? $projectModel->manager->name : 'Unassigned';
+                    $projectModel->takeover_requested = false;
+                    $projectModel->takeover_accepted = false;
+                    $projectModel->takeover_rejected = false;
+
+                    $assignment = \App\Models\ProjectAssignment::where('project_id', $projectModel->id)
+                        ->where('user_id', $user->id)
+                        ->latest()
+                        ->first();
+
+                    if ($assignment) {
+                        $projectModel->takeover_requested = true;
+                        if ($assignment->status === 'accepted') {
+                            $projectModel->takeover_accepted = true;
+                        } elseif ($assignment->status === 'rejected') {
+                            $projectModel->takeover_rejected = true;
+                        }
+                    }
+                    $projectModel->manager_id = $projectModel->manager ? $projectModel->manager->id : 0;
+                    $projectModel->overdue_tasks = $projectModel->tasks->where('deadline', '<', now())->count();
+                    $tasks = $projectModel->tasks;
+                    $count = 0;
+                    for($j = 0; $j < $tasks->count(); $j++){
+                        if($tasks[$j]->task_no !== null){
+                            $count++;
+                        }
+                    }
+                    $projectModel->crew = $count;
+                    $actualProjects[] = $projectModel;
+                }
+                foreach ($actualProjects as $project) {
+                    $project->high_priority_tasks = $project->tasks->where('priority', 'high')->count();
+                    $project->incomplete_tasks = $project->tasks->whereNotIn('status', ['completed'])->count();
+                }
+
+                // Sort the projects
+                usort($actualProjects, function($a, $b) {
+                    // First by high priority tasks (descending)
+                    if ($a->high_priority_tasks != $b->high_priority_tasks) {
+                        return $b->high_priority_tasks - $a->high_priority_tasks;
+                    }
+
+                    // Then by incomplete tasks (descending)
+                    return $b->incomplete_tasks - $a->incomplete_tasks;
+                });
+
+                return Inertia::render('Manager/AllProjects',
+                    [
+                        'projects' => $actualProjects,
+                        'user' => $user,
+                    ]
+                );
+            }
+            return Redirect::route('unauthorized');
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e);
+            return response()->json(["error"=>DB::table('sessions')->get()[0]]);
+        }
+    }
+    public function projectSearch(Request $request){
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                if (!$user || $user->roles->name !== 'ProjectManager') {
+                    return Redirect::route('unauthorized');
+                }
+                $query = $request->get('q');
+                $projects = Project::where('manager_id', $user->id)
+                    ->where('name', 'like', '%' . $request->query('q') . '%')
+                    ->select('id', 'name')
+                    ->take(5)
+                    ->get();
+
+                if ($projects->isEmpty()) {
+                    return response()->json(['message' => 'No projects found']);
+                }
+
+                return response()->json($projects);
             }
             return response()->json(["error"=>"error occured"]);
         } catch (\Exception $e) {
@@ -451,6 +581,50 @@ class ManagerController extends Controller
         } catch (\Exception $e) {
             // Optionally log the exception: \Log::error($e);
             return Redirect::route('unauthorized');
+        }
+    }
+    public function projectAssignment(Request $request) {
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                if (!$user || $user->roles->name !== 'ProjectManager') {
+                    return response()->json(['message'=>"You are not authorized."]);
+                }
+                $validated = $request->validate([
+                        'project_id' => 'required|integer|exists:projects,id',
+                        'user_id' => 'required|integer|exists:users,id',
+                        'requested_by' => 'required|integer|exists:users,id',
+                        'status' => 'required|string',
+                        'message' => 'nullable|string',
+                    ]);
+                $assignment = \App\Models\ProjectAssignment::create($validated);
+                return response()->json(["message"=>"Assignment requested Successfully","data"=>$assignment]);
+
+            } else {
+                return response()->json(['message'=>"You are not authorized."], 403);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(['error' => $ve->errors(),"empid"=>$request->employee_id], 422);
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e)6
+            return response()->json(["error"=>$e->getMessage()]);
+        } catch (\Illuminate\Database\QueryException $qe) {
+            // Handle database query exceptions
+            return response()->json(['error' => 'Database error: ' . $qe->getMessage()], 500);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $he) {
+            if ($he->getStatusCode() === 403) {
+            return response()->json(['error' => 'Forbidden'], 403);
+            }
+            throw $he;
         }
     }
 

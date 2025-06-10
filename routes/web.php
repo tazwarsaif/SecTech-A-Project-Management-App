@@ -302,9 +302,11 @@ Route::get('register', function () {
 })->name('register');
 
 Route::get('/manager/myprojects', [ManagerController::class,'myProjects'])->name('manager.myprojects');
+Route::get('/manager/allprojects', [ManagerController::class,'allProjects'])->name('manager.allprojects');
 
 Route::get('/manager/myprojects/{id}', [ManagerController::class, 'show'])->name('manager.project.show');
 Route::get('/manager/projectcreation', [ManagerController::class, 'storeProject'])->name('manager.project.creation');
+// Route::post('/assignment', [ManagerController::class, 'projectAssignment']);
 
 Route::get('/unauthorized', function () {
     return abort(403, 'Unauthorized action.');
