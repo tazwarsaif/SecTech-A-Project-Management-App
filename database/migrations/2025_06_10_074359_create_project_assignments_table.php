@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('project_assignments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('requested_by')->constrained('users')->cascadeOnDelete();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->text('message')->nullable();

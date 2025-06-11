@@ -284,6 +284,9 @@ const AllProjects = ({
                                                 <option value={"completed"}>
                                                     Completed
                                                 </option>
+                                                <option value={"active"}>
+                                                    Active
+                                                </option>
                                                 <option value={"on_hold"}>
                                                     On Hold
                                                 </option>

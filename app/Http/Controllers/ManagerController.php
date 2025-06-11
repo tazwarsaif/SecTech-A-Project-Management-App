@@ -231,11 +231,17 @@ class ManagerController extends Controller
 
                 // Sort the projects
                 usort($actualProjects, function($a, $b) {
+                    // Cancelled projects always at the bottom
+                    if ($a->status === 'cancelled' && $b->status !== 'cancelled') {
+                        return 1;
+                    }
+                    if ($b->status === 'cancelled' && $a->status !== 'cancelled') {
+                        return -1;
+                    }
                     // First by high priority tasks (descending)
                     if ($a->high_priority_tasks != $b->high_priority_tasks) {
                         return $b->high_priority_tasks - $a->high_priority_tasks;
                     }
-
                     // Then by incomplete tasks (descending)
                     return $b->incomplete_tasks - $a->incomplete_tasks;
                 });
