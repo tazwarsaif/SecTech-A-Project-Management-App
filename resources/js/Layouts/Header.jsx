@@ -97,6 +97,11 @@ const Header = () => {
                             <a href="/manager/allprojects">All Projects</a>
                         </li>
                         <li className="text-l font mb-4">
+                            <a href="/manager/leaveownership">
+                                Project Ownership Transfer
+                            </a>
+                        </li>
+                        <li className="text-l font mb-4">
                             <a>My Account</a>
                         </li>
 

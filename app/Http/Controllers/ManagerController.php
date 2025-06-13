@@ -528,7 +528,7 @@ class ManagerController extends Controller
             return response()->json(['error' => $ve->errors(),"empid"=>$request->employee_id], 422);
         }
     }
-    public function storeProject(Request $request) {
+    public function getLeaveOwnership(Request $request) {
         try {
             $temp = DB::table('sessions')->get();
             if ($temp->count() > 1) {
@@ -543,7 +543,11 @@ class ManagerController extends Controller
                 if (!$user || $user->roles->name !== 'ProjectManager') {
                     return Redirect::route('unauthorized');
                 }
-                return Inertia::render("Manager/ProjectCreation");
+                $projects = Project::where('manager_id', $user_id)->get();
+                return Inertia::render("Manager/LeaveOwnership", [
+                    'projects' => $projects,
+                    'user' => $user,
+                ]);
 
             } else {
                 return Redirect::route('unauthorized');

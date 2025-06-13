@@ -305,7 +305,7 @@ Route::get('/manager/myprojects', [ManagerController::class,'myProjects'])->name
 Route::get('/manager/allprojects', [ManagerController::class,'allProjects'])->name('manager.allprojects');
 
 Route::get('/manager/myprojects/{id}', [ManagerController::class, 'show'])->name('manager.project.show');
-Route::get('/manager/projectcreation', [ManagerController::class, 'storeProject'])->name('manager.project.creation');
+Route::get('/manager/leaveownership', [ManagerController::class, 'getLeaveOwnership'])->name('manager.project.leaveownershipview');
 // Route::post('/assignment', [ManagerController::class, 'projectAssignment']);
 
 Route::get('/unauthorized', function () {

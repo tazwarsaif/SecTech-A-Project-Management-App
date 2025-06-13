@@ -1,7 +1,13 @@
+import { Head } from "@inertiajs/react";
 import ManagerLayout from "../../Layouts/ManagerLayout";
-const ProjectCreation = () => {
+const LeaveOwnership = (data) => {
+    console.log(data);
     return (
         <>
+            <Head>
+                <title>Project Ownership Transfer</title>
+                <meta name="description" content="Page description" />
+            </Head>
             <ManagerLayout></ManagerLayout>
             <div className="heading text-2xl ml-7 lg:ml-90 mr-7 mt-25 flex justify-center items-center p-7 mb-20">
                 <div className="heading text-2xl flex flex-col md:flex-row lg:flex-row xl:flex-row flex-wrap">
@@ -57,4 +63,4 @@ const ProjectCreation = () => {
     );
 };
 
-export default ProjectCreation;
+export default LeaveOwnership;

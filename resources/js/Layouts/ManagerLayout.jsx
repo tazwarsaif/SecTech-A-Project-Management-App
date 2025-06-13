@@ -87,14 +87,15 @@ function ManagerLayout() {
                                         My Projects
                                     </a>
                                 </li>
-                                <li className="text-l font mb-4">
-                                    <a href="/manager/projectcreation">
-                                        Project Creation
-                                    </a>
-                                </li>
+
                                 <li className="text-l font mb-4">
                                     <a href="/manager/allprojects">
                                         All Projects
+                                    </a>
+                                </li>
+                                <li className="text-l font mb-4">
+                                    <a href="/manager/leaveownership">
+                                        Project Ownership Transfer
                                     </a>
                                 </li>
 
