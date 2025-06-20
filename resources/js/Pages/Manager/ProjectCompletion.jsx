@@ -2,7 +2,7 @@ import { Head } from "@inertiajs/react";
 import { useState } from "react";
 import ManagerLayout from "../../Layouts/ManagerLayout";
 
-const LeaveOwnership = ({ projects, user, managers }) => {
+const ProjectCompletion = ({ projects, user, managers }) => {
     const token = localStorage.getItem("token");
     const session = localStorage.getItem("session");
     if (!session) {
@@ -23,9 +23,6 @@ const LeaveOwnership = ({ projects, user, managers }) => {
     const validateForm2 = () => {
         const errors = {};
 
-        if (!message.trim()) {
-            errors.subject = "Reasoning is required.";
-        }
         if (!selectedProjectId) {
             errors.report = "You must select a project.";
         }
@@ -52,14 +49,12 @@ const LeaveOwnership = ({ projects, user, managers }) => {
         try {
             const formData = {
                 project_id: projectId,
-                user_id: selectedManagerId,
                 requested_by: user.id,
-                status: "pending",
-                message: message,
+                admin_note: message,
             };
             console.log("Form Data:", formData);
             const response = await axios.post(
-                `http://127.0.0.1:8000/api/assignment`,
+                `http://127.0.0.1:8000/api/project-completion`,
                 formData,
                 {
                     headers: {
@@ -88,7 +83,7 @@ const LeaveOwnership = ({ projects, user, managers }) => {
                     <div className="card bg-base-100 shadow-md m-4 p-7 w-full max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-3xl flex justify-center items-center">
                         <div className="w-full">
                             <div className="text-center text-2xl font-semibold mb-4">
-                                Project Ownership Transfer
+                                Project Completion Form
                             </div>
 
                             <div className="mb-4 mt-7">
@@ -154,42 +149,17 @@ const LeaveOwnership = ({ projects, user, managers }) => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="mb-4 mt-2 w-full">
-                                <label
-                                    className="block text-gray-700 text-sm font-bold mb-3"
-                                    htmlFor="title"
-                                >
-                                    If there is any manager to handover
-                                    specifically
-                                    <p className="text-gray-300">optional</p>
-                                </label>
-                                <select
-                                    className="select w-full"
-                                    value={selectedManagerId || ""}
-                                    onChange={handleManager}
-                                >
-                                    <option value="">---</option>
-                                    {managers.map((manager) => (
-                                        <option
-                                            value={manager.id}
-                                            key={manager.id}
-                                        >
-                                            {manager.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
 
                             <div className="mb-4 mt-7">
                                 <label
                                     className="block text-gray-700 text-sm font-bold mb-2"
                                     htmlFor="client"
                                 >
-                                    Write your reason
+                                    Write completion note here
                                 </label>
                                 <textarea
                                     className="textarea w-full mt-2"
-                                    placeholder="Write your message"
+                                    placeholder="Write your note"
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                 ></textarea>
@@ -212,4 +182,4 @@ const LeaveOwnership = ({ projects, user, managers }) => {
     );
 };
 
-export default LeaveOwnership;
+export default ProjectCompletion;

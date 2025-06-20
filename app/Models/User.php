@@ -87,5 +87,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(EmployeeReport::class, 'submitted_by');
     }
-
+    public function completionRequests() {
+        return $this->hasMany(ProjectCompletionRequest::class, 'requested_by');
+    }
 }

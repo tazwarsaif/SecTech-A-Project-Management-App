@@ -41,5 +41,12 @@ class Project extends Model
     {
         return $this->belongsToMany(User::class, 'project_crew_members')->where('role_id', 4);
     }
+     public function projectAssignments()
+    {
+        return $this->hasMany(ProjectAssignment::class, 'project_id');
+    }
+    public function completionRequests() {
+        return $this->hasMany(ProjectCompletionRequest::class);
+    }
 
 }

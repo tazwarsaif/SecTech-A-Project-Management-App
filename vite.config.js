@@ -12,4 +12,12 @@ export default defineConfig({
         tailwindcss(),
         react(),
     ],
+    optimizeDeps: {
+    include: [
+      '@fullcalendar/core',
+      '@fullcalendar/react',
+      '@fullcalendar/daygrid',
+      '@fullcalendar/interaction'
+    ]
+  }
 });

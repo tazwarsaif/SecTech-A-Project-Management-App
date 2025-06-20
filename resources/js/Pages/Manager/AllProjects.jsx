@@ -109,7 +109,7 @@ const AllProjects = ({
         try {
             const formData = {
                 project_id: projectId,
-                user_id: user.id,
+                user_id: null,
                 requested_by: user.id,
                 status: "pending",
                 message: message,

@@ -36,17 +36,7 @@ Route::get('/',function(){
     return Redirect::route('login');
 })->name('home');
 
-Route::get('/manager',function (){
-    $temp = DB::table('sessions')->get();
-    for ($i = 0; $i < $temp->count(); $i++) {
-        $session = $temp[$i];
-        $temp1 = checkUserRole($session->user_id);
-        if($temp1 === 2) {
-            return inertia('Manager/Home');
-        }
-    }
-    return Redirect::route('home');
-})->name('manager.home');
+Route::get('/manager',[ManagerController::class,'dashdoardView'])->name('manager.home');
 
 Route::get('/employee', function () {
     $temp = DB::table('sessions')->get();
@@ -301,11 +291,13 @@ Route::get('register', function () {
     ]);
 })->name('register');
 
+Route::get('/projects/progress', [ManagerController::class,'getprojects'])->name('manager.getprojects');
 Route::get('/manager/myprojects', [ManagerController::class,'myProjects'])->name('manager.myprojects');
 Route::get('/manager/allprojects', [ManagerController::class,'allProjects'])->name('manager.allprojects');
 
 Route::get('/manager/myprojects/{id}', [ManagerController::class, 'show'])->name('manager.project.show');
 Route::get('/manager/leaveownership', [ManagerController::class, 'getLeaveOwnership'])->name('manager.project.leaveownershipview');
+Route::get('/manager/project-completion', [ManagerController::class, 'getprojectCompletion'])->name('manager.project.projectCompletionview');
 // Route::post('/assignment', [ManagerController::class, 'projectAssignment']);
 
 Route::get('/unauthorized', function () {

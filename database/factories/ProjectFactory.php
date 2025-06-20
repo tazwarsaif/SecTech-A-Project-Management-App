@@ -24,7 +24,7 @@ class ProjectFactory extends Factory
         'client_id' => Client::inRandomOrder()->first()->id,
         'manager_id' => User::whereHas('role', fn($q) => $q->where('name', 'ProjectManager'))->inRandomOrder()->first()->id,
         'start_date' => $this->faker->date,
-        'end_date' => $this->faker->date('+1 year'),
+        'end_date' => $this->faker->date,
         'status' => $this->faker->randomElement(['active', 'completed', 'on_hold', 'cancelled']),
     ];
     }

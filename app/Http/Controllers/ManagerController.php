@@ -18,6 +18,117 @@ use \Illuminate\Support\Facades\Auth;
 
 class ManagerController extends Controller
 {
+    public function dashdoardView(Request $request){
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                $projects = Project::where('manager_id', $user->id)
+                    ->select('id', 'name', 'start_date' ,'end_date')
+                    ->get();
+                // $tasks = Task::select('id', 'name', 'deadline')->get();
+
+                $events = [];
+
+                foreach ($projects as $project) {
+                    $events[] = [
+                        'title' => '🛠' . $project->name,
+                        'start' => $project->start_date,
+                        'color' => '#3b82f6', // blue
+                    ];
+                }
+                foreach ($projects as $project) {
+                    $events[] = [
+                        'title' => '🛠' . $project->name,
+                        'start' => $project->end_date,
+                        'color' => '#f97316', // orange
+                    ];
+                }
+
+                // Fetch top 5 high priority and pending tasks with close deadlines and progression
+                $highPriorityTasks = Task::whereIn('project_id', $projects->pluck('id'))
+                    ->where(function ($query) {
+                        $query->where('priority', 'high')
+                              ->orWhere('status', 'pending');
+                    })
+                    ->where('deadline', '>=', now())
+                    ->orderBy('deadline', 'asc')
+                    ->orderBy('progress', 'desc')
+                    ->take(5)
+                    ->get();
+
+                $data = $projects->map(function ($project) {
+                $totalTasks = $project->tasks->count();
+                $completedTasks = $project->tasks->where('status', 'completed')->count();
+                $pendingTasks = $totalTasks - $completedTasks;
+
+                return [
+                    'name' => $project->name,
+                    'completed' => $completedTasks,
+                    'pending' => $pendingTasks,
+
+                    ];
+                });
+                return Inertia::render('Manager/Home',[
+                    'user' => $user,
+                    'eventsBack' => $events,
+                    'projects' => $projects,
+                    'data' => $data,
+                    'tasks' => $highPriorityTasks
+                ]
+                );
+            }
+            return Redirect::route('unauthorized');
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e);
+            return response()->json(["error"=>DB::table('sessions')->get()[0]]);
+        }
+    }
+    public function getprojects(Request $request){
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                $projects = Project::where('manager_id', $user->id)
+                    ->select('id', 'name', 'start_date' ,'end_date')
+                    ->get();
+                // $tasks = Task::select('id', 'name', 'deadline')->get();
+
+
+
+                $data = $projects->take(5)->map(function ($project) {
+                    $totalTasks = $project->tasks->count();
+                    $completedTasks = $project->tasks->where('status', 'completed')->count();
+                    $pendingTasks = $totalTasks - $completedTasks;
+
+                    return [
+                        'name' => $project->name,
+                        'completed' => $completedTasks,
+                        'pending' => $pendingTasks,
+                    ];
+                });
+                return response()->json($data);
+            }
+            return Redirect::route('unauthorized');
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e);
+            return response()->json(["error"=>DB::table('sessions')->get()[0]]);
+        }
+    }
     public function myProjects(Request $request){
         try {
             $temp = DB::table('sessions')->get();
@@ -528,6 +639,42 @@ class ManagerController extends Controller
             return response()->json(['error' => $ve->errors(),"empid"=>$request->employee_id], 422);
         }
     }
+    public function getProjectCompletion(Request $request) {
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                $managers = User::where('role_id', 2)
+                    ->where('id', '!=', $user->id)
+                    ->get();
+                if (!$user || $user->roles->name !== 'ProjectManager') {
+                    return Redirect::route('unauthorized');
+                }
+                $projects = Project::where('manager_id', $user_id)
+                    ->whereDoesntHave('projectAssignments')
+                    ->get();
+                return Inertia::render("Manager/ProjectCompletion", [
+                    'projects' => $projects,
+                    'user' => $user,
+                    'managers' => $managers
+                ]);
+
+            } else {
+                return Redirect::route('unauthorized');
+            }
+
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e);
+            return Redirect::route('unauthorized');
+        }
+    }
     public function getLeaveOwnership(Request $request) {
         try {
             $temp = DB::table('sessions')->get();
@@ -540,13 +687,19 @@ class ManagerController extends Controller
                     }
                 }
                 $user = User::find($user_id);
+                $managers = User::where('role_id', 2)
+                    ->where('id', '!=', $user->id)
+                    ->get();
                 if (!$user || $user->roles->name !== 'ProjectManager') {
                     return Redirect::route('unauthorized');
                 }
-                $projects = Project::where('manager_id', $user_id)->get();
+                $projects = Project::where('manager_id', $user_id)
+                    ->whereDoesntHave('projectAssignments')
+                    ->get();
                 return Inertia::render("Manager/LeaveOwnership", [
                     'projects' => $projects,
                     'user' => $user,
+                    'managers' => $managers
                 ]);
 
             } else {
@@ -610,13 +763,91 @@ class ManagerController extends Controller
                 }
                 $validated = $request->validate([
                         'project_id' => 'required|integer|exists:projects,id',
-                        'user_id' => 'required|integer|exists:users,id',
+                        'user_id' => 'nullable|integer|exists:users,id',
                         'requested_by' => 'required|integer|exists:users,id',
                         'status' => 'required|string',
                         'message' => 'nullable|string',
                     ]);
+                $existingAssignment = \App\Models\ProjectAssignment::where('project_id', $validated['project_id'])
+                    ->where('user_id', $validated['user_id'])
+                    ->first();
+
+                if ($existingAssignment) {
+                    return response()->json([
+                        "message" => "Assignment already exists for this project and user.",
+                        "data" => $existingAssignment
+                    ], 409);
+                }
                 $assignment = \App\Models\ProjectAssignment::create($validated);
                 return response()->json(["message"=>"Assignment requested Successfully","data"=>$assignment]);
+
+            } else {
+                return response()->json(['message'=>"You are not authorized."], 403);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(['error' => $ve->errors(),"empid"=>$request->employee_id], 422);
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e)6
+            return response()->json(["error"=>$e->getMessage()]);
+        } catch (\Illuminate\Database\QueryException $qe) {
+            // Handle database query exceptions
+            return response()->json(['error' => 'Database error: ' . $qe->getMessage()], 500);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $he) {
+            if ($he->getStatusCode() === 403) {
+            return response()->json(['error' => 'Forbidden'], 403);
+            }
+            throw $he;
+        }
+    }
+    public function projectCompletionRequest(Request $request) {
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                if (!$user || $user->roles->name !== 'ProjectManager') {
+                    return response()->json(['message'=>"You are not authorized."]);
+                }
+                $validated = $request->validate([
+                    'project_id'   => 'required|integer|exists:projects,id',
+                    'requested_by' => 'required|integer|exists:users,id',
+                    'admin_note'   => 'nullable|string',
+                ]);
+
+                // Check if a pending completion request already exists for this project
+                $existingRequest = \App\Models\ProjectCompletionRequest::where('project_id', $validated['project_id'])
+                    ->where('status', 'pending')
+                    ->first();
+
+                if ($existingRequest) {
+                    return response()->json([
+                        "message" => "A pending completion request already exists for this project.",
+                        "data" => $existingRequest
+                    ], 409);
+                }
+
+                $project = Project::find($validated['project_id']);
+                if (!$project || $project->manager_id !== $user->id) {
+                    return response()->json(['error' => 'You are not authorized to request completion for this project.'], 403);
+                }
+
+                $completionRequest = \App\Models\ProjectCompletionRequest::create([
+                    'project_id'   => $validated['project_id'],
+                    'requested_by' => $validated['requested_by'],
+                    'admin_note'   => $validated['admin_note'] ?? null,
+                ]);
+
+                return response()->json([
+                    "message" => "Project completion request submitted successfully.",
+                    "data" => $completionRequest
+                ]);
 
             } else {
                 return response()->json(['message'=>"You are not authorized."], 403);

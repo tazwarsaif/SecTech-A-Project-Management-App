@@ -29,3 +29,17 @@
 div {
     overflow-y: hidden;
 }
+
+.fc-event-custom {
+    white-space: normal !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.2;
+    padding: 6px;
+}
+
+.fc-event-title {
+    white-space: normal !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}

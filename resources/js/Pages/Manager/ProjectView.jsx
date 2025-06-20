@@ -479,13 +479,24 @@ const ProjectView = ({ project, category = null }) => {
                     <div className="card bg-base-100 shadow-md m-4 p-4 flex flex-col lg:flex-row mb-3.5">
                         <div className="card-body text-wrap w-fit flex flex-row justify-between">
                             <h1 className="font-bold text-3xl text-wrap flex flex-wrap">
-                                {project.name}
+                                {project.name}{" "}
+                                {project.status === "active" && (
+                                    <div className="text-info">(Active)</div>
+                                )}
+                                {project.status === "on_hold" && (
+                                    <div className="text-error">(On_hold)</div>
+                                )}
+                                {project.status === "cancelled" && (
+                                    <div className="text-error">
+                                        (Cancelled)
+                                    </div>
+                                )}
+                                {project.status === "completed" && (
+                                    <div className="text-success">
+                                        (Completed)
+                                    </div>
+                                )}
                             </h1>
-                            <div className="text-wrap w-fit">
-                                <button className="btn btn-primary w-max">
-                                    Edit Project
-                                </button>
-                            </div>
                         </div>{" "}
                     </div>
 
@@ -1525,10 +1536,10 @@ const ProjectView = ({ project, category = null }) => {
                                                 </label>
                                                 <div className="flex space-x-1">
                                                     <select
-                                                        value={employee} // Make sure `employee` state holds the selected `employee.id`
+                                                        value={employee}
                                                         onChange={(e) => {
                                                             selectChange(e);
-                                                        }} // Convert string to number
+                                                        }}
                                                         className="border rounded px-3 py-2 bg-white w-sm" // Better width control
                                                     >
                                                         {editMode === true && (

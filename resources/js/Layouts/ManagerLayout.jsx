@@ -98,6 +98,11 @@ function ManagerLayout() {
                                         Project Ownership Transfer
                                     </a>
                                 </li>
+                                <li className="text-l font mb-4">
+                                    <a href="/manager/project-completion">
+                                        Project Completion
+                                    </a>
+                                </li>
 
                                 <li className="text-l font p-0">
                                     <button
