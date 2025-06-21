@@ -61,8 +61,9 @@ class ManagerController extends Controller
                     ->where('deadline', '>=', now())
                     ->orderBy('deadline', 'asc')
                     ->orderBy('progress', 'desc')
-                    ->take(5)
+                    ->take(10)
                     ->get();
+                $unassignedProjects = Project::whereNull('manager_id')->select('id', 'name')->take(5)->get();
 
                 $data = $projects->map(function ($project) {
                 $totalTasks = $project->tasks->count();
@@ -81,7 +82,8 @@ class ManagerController extends Controller
                     'eventsBack' => $events,
                     'projects' => $projects,
                     'data' => $data,
-                    'tasks' => $highPriorityTasks
+                    'tasks' => $highPriorityTasks,
+                    'unassignedProjects' => $unassignedProjects
                 ]
                 );
             }

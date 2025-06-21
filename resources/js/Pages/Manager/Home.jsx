@@ -6,7 +6,14 @@ import { useEffect, useState } from "react";
 import ManagerLayout from "../../Layouts/ManagerLayout.jsx";
 import ProjectProgressBarChart from "./ProjectProgressBarChart.jsx";
 
-const Home = ({ user, eventsBack, projects, data, tasks }) => {
+const Home = ({
+    user,
+    eventsBack,
+    projects,
+    data,
+    tasks,
+    unassignedProjects,
+}) => {
     const [events, setEvents] = useState(eventsBack);
     const token = localStorage.getItem("token");
 
@@ -56,18 +63,18 @@ const Home = ({ user, eventsBack, projects, data, tasks }) => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full mt-9">
                     {/* Project Progress Chart */}
                     <section className="w-full md:-mt-5">
-                        <div className="bg-white rounded-xl p-4 sm:p-6 h-full">
+                        <section className="bg-white rounded-xl p-4 sm:p-6 h-full">
                             <ProjectProgressBarChart />
-                        </div>
+                        </section>
                     </section>
 
                     {/* Calendar */}
                     <section className="w-full">
-                        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+                        <section className="bg-white rounded-xl shadow p-4 sm:p-6">
                             <h1 className="text-xl sm:text-2xl font-bold mb-4">
                                 📅 Project Calendar
                             </h1>
-                            <div className="flex items-center gap-4 mb-3">
+                            <section className="flex items-center gap-4 mb-3">
                                 <span className="flex items-center gap-1">
                                     <span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span>
                                     <span className="text-xs text-gray-600">
@@ -80,8 +87,8 @@ const Home = ({ user, eventsBack, projects, data, tasks }) => {
                                         End Date
                                     </span>
                                 </span>
-                            </div>
-                            <div className="text-sm overflow-x-auto">
+                            </section>
+                            <section className="text-sm overflow-x-auto">
                                 <FullCalendar
                                     plugins={[dayGridPlugin]}
                                     initialView="dayGridMonth"
@@ -89,20 +96,22 @@ const Home = ({ user, eventsBack, projects, data, tasks }) => {
                                     eventContent={renderEventContent}
                                     height="360px"
                                 />
-                            </div>
-                        </div>
+                            </section>
+                        </section>
                     </section>
-                    <section className="w-full">
-                        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+
+                    {/* Tasks Overview */}
+                    <section className="w-full mb-3">
+                        <section className="bg-white rounded-xl shadow p-4 sm:p-6">
                             <h1 className="text-xl sm:text-2xl font-bold mb-4">
                                 📝 Tasks Overview
                             </h1>
-                            <section className="card space-y-3">
+                            <section className="card space-y-3 h-66 overflow-scroll">
                                 {tasks && tasks.length > 0 ? (
                                     tasks.map((task) => (
                                         <section
                                             key={task.id}
-                                            className="flex items-center justify-between border-b last:border-b-0 py-2"
+                                            className="flex items-center justify-between  py-2"
                                         >
                                             <section>
                                                 <section className="font-medium">
@@ -145,25 +154,58 @@ const Home = ({ user, eventsBack, projects, data, tasks }) => {
                                     </section>
                                 )}
                             </section>
-                        </div>
+                        </section>
                     </section>
 
-                    {/* Calendar */}
-                    <section className="w-full">
-                        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+                    {/* Unassigned Projects */}
+                    <section className="card w-full">
+                        <section className="bg-white rounded-xl shadow p-4 sm:p-6 h-90">
                             <h1 className="text-xl sm:text-2xl font-bold mb-4">
-                                📅 Project & Task Calendar
+                                📦 Unassigned Projects
                             </h1>
-                            <div className="text-sm overflow-x-auto">
-                                <FullCalendar
-                                    plugins={[dayGridPlugin]}
-                                    initialView="dayGridMonth"
-                                    events={eventsBack}
-                                    eventContent={renderEventContent}
-                                    height="390px"
-                                />
-                            </div>
-                        </div>
+                            {unassignedProjects &&
+                            unassignedProjects.length > 0 ? (
+                                <section className="space-y-2">
+                                    {unassignedProjects.map((project) => (
+                                        <section
+                                            key={project.id}
+                                            className="flex items-center justify-between py-2 hover:bg-gray-200 hover:cursor-pointer p-3 rounded"
+                                        >
+                                            <section>
+                                                <section className="font-medium">
+                                                    {project.name}
+                                                </section>
+                                            </section>
+                                            <section>
+                                                <span
+                                                    className={`px-2 py-1 rounded text-xs font-semibold ${
+                                                        project.status ===
+                                                        "completed"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : project.status ===
+                                                              "in_progress"
+                                                            ? "bg-yellow-100 text-yellow-700"
+                                                            : "bg-gray-100 text-gray-700"
+                                                    }`}
+                                                >
+                                                    {project.status ===
+                                                    "completed"
+                                                        ? "Completed"
+                                                        : project.status ===
+                                                          "in_progress"
+                                                        ? "In Progress"
+                                                        : "Pending"}
+                                                </span>
+                                            </section>
+                                        </section>
+                                    ))}
+                                </section>
+                            ) : (
+                                <section className="text-gray-400 text-sm">
+                                    All projects are assigned.
+                                </section>
+                            )}
+                        </section>
                     </section>
                 </div>
             </div>
