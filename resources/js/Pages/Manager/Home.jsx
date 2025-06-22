@@ -51,7 +51,7 @@ const Home = ({
                 title={`Title: ${eventInfo.event.title} Date: ${startDate}`}
                 className="fc-event-custom text-xs sm:text-sm"
             >
-                <b>🛠</b>
+                <b>{eventInfo.event.title}</b>
             </div>
         );
     };
@@ -106,7 +106,7 @@ const Home = ({
                             <h1 className="text-xl sm:text-2xl font-bold mb-4">
                                 📝 Tasks Overview
                             </h1>
-                            <section className="card space-y-3 h-66 overflow-scroll">
+                            <section className="card space-y-3 h-66 overflow-y-scroll">
                                 {tasks && tasks.length > 0 ? (
                                     tasks.map((task) => (
                                         <section

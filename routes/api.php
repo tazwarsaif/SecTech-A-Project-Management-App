@@ -24,6 +24,7 @@ Route::post('/addtask', [ManagerController::class, 'storeProjectTask'])->middlew
 Route::post('/updatetask', [ManagerController::class, 'updateProjectTask'])->middleware('auth:sanctum');
 Route::post('/deletetask', [ManagerController::class, 'deleteProjectTask'])->middleware('auth:sanctum');
 Route::post('/assignment', [ManagerController::class, 'projectAssignment'])->middleware('auth:sanctum');
+Route::post('/leave-ownership', [ManagerController::class, 'leaveOwnership'])->middleware('auth:sanctum');
 Route::post('/addreport', [ManagerController::class, 'reportSubmission'])->middleware('auth:sanctum');
 Route::post('/project-completion', [ManagerController::class, 'projectCompletionRequest'])->middleware('auth:sanctum');
 Route::post('/addcrew', [ManagerController::class, 'addProjectCrew'])->middleware('auth:sanctum');

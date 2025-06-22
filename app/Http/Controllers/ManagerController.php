@@ -802,6 +802,60 @@ class ManagerController extends Controller
             throw $he;
         }
     }
+    public function leaveOwnership(Request $request) {
+        try {
+            $temp = DB::table('sessions')->get();
+            if ($temp->count() > 1) {
+                $user_id = null;
+                for($i=0;$i<$temp->count();$i++){
+                    if($temp[$i]->user_id!==null){
+                        $user_id = $temp[$i]->user_id;
+                        break;
+                    }
+                }
+                $user = User::find($user_id);
+                if (!$user || $user->roles->name !== 'ProjectManager') {
+                    return response()->json(['message'=>"You are not authorized."]);
+                }
+                $validated = $request->validate([
+                        'project_id' => 'required|integer|exists:projects,id',
+                        'transfer_to' => 'nullable|integer|exists:users,id',
+                        'requested_by' => 'required|integer|exists:users,id',
+                        'status' => 'required|string',
+                        'message' => 'nullable|string',
+                    ]);
+                $existingAssignment = \App\Models\ProjectAssignment::where('project_id', $validated['project_id'])
+                    ->where('requested_by', $validated['requested_by'])
+                    ->first();
+
+                if ($existingAssignment) {
+                    return response()->json([
+                        "message" => "Assignment already exists for this project and user.",
+                        "data" => $existingAssignment
+                    ], 409);
+                }
+                $assignment = \App\Models\ProjectOwnershipTransferRequest::create($validated);
+                return response()->json(["message"=>"Assignment requested Successfully","data"=>$assignment]);
+
+            } else {
+                return response()->json(['message'=>"You are not authorized."], 403);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(['error' => $ve->errors(),"empid"=>$request->employee_id], 422);
+        } catch (\Exception $e) {
+            // Optionally log the exception: \Log::error($e)6
+            return response()->json(["error"=>$e->getMessage()]);
+        } catch (\Illuminate\Database\QueryException $qe) {
+            // Handle database query exceptions
+            return response()->json(['error' => 'Database error: ' . $qe->getMessage()], 500);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $he) {
+            if ($he->getStatusCode() === 403) {
+            return response()->json(['error' => 'Forbidden'], 403);
+            }
+            throw $he;
+        }
+    }
     public function projectCompletionRequest(Request $request) {
         try {
             $temp = DB::table('sessions')->get();

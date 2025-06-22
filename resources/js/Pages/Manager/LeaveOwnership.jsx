@@ -52,14 +52,14 @@ const LeaveOwnership = ({ projects, user, managers }) => {
         try {
             const formData = {
                 project_id: projectId,
-                user_id: selectedManagerId,
+                transfer_to: selectedManagerId,
                 requested_by: user.id,
                 status: "pending",
                 message: message,
             };
             console.log("Form Data:", formData);
             const response = await axios.post(
-                `http://127.0.0.1:8000/api/assignment`,
+                `http://127.0.0.1:8000/api/leave-ownership`,
                 formData,
                 {
                     headers: {
