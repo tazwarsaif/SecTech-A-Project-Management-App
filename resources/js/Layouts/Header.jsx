@@ -1,5 +1,7 @@
 import { router } from "@inertiajs/react";
 import axios from "axios";
+import { useEffect } from "react";
+import { io } from "socket.io-client";
 const Header = () => {
     const token = localStorage.getItem("token");
     const session = localStorage.getItem("session");
@@ -31,6 +33,20 @@ const Header = () => {
         localStorage.removeItem("session");
         router.visit("/login");
     };
+    useEffect(() => {
+        const socket = io("http://localhost:6001"); // WebSocket server
+
+        socket.emit("join", `user.36`);
+
+        socket.on("message", (message) => {
+            console.log("New message:", message);
+            alert(message);
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
     return (
         <>
             <div className="drawer fixed top-0 z-50">
@@ -71,6 +87,9 @@ const Header = () => {
                                 {/* Navbar menu content here */}
                                 <li>
                                     <a>My Account</a>
+                                </li>
+                                <li>
+                                    <div>🔔</div>
                                 </li>
                             </ul>
                         </div>

@@ -15,6 +15,8 @@ use Inertia\Inertia;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use \Illuminate\Support\Facades\Auth;
+// Add the correct import for TaskAssigned if it exists
+use App\Events\TaskAssigned;
 
 class ManagerController extends Controller
 {
@@ -835,6 +837,7 @@ class ManagerController extends Controller
                     ], 409);
                 }
                 $assignment = \App\Models\ProjectOwnershipTransferRequest::create($validated);
+                event(new TaskAssigned("You requested a leave ownership", $user->id));
                 return response()->json(["message"=>"Assignment requested Successfully","data"=>$assignment]);
 
             } else {
