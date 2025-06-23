@@ -837,7 +837,6 @@ class ManagerController extends Controller
                     ], 409);
                 }
                 $assignment = \App\Models\ProjectOwnershipTransferRequest::create($validated);
-                event(new TaskAssigned("You requested a leave ownership", $user->id));
                 return response()->json(["message"=>"Assignment requested Successfully","data"=>$assignment]);
 
             } else {
